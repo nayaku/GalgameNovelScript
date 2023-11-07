@@ -62,8 +62,8 @@ namespace GalgameNovelScript
         }
         public void SkipComment()
         {
-            while (CurrentChar != '\0' && CurrentChar != '\u000C' ||
-                CurrentChar != '\n' || CurrentChar != '\r')
+            while (CurrentChar != '\0' && CurrentChar != '\u000C' &&
+                CurrentChar != '\n' && CurrentChar != '\r' && CurrentChar != '\f')
             {
                 Advance();
             }
@@ -220,7 +220,8 @@ namespace GalgameNovelScript
                 {
                     return NewLine();
                 }
-                if (CurrentChar == '#' || (CurrentChar == '注' && Peek() == '释'))
+                if (CurrentChar == '#' || (CurrentChar == '/' && Peek() == '/') 
+                    || (CurrentChar == '注' && Peek() == '释'))
                 {
                     SkipComment();
                     continue;
@@ -229,7 +230,8 @@ namespace GalgameNovelScript
                     return ID();
                 if (char.IsDigit(CurrentChar))
                     return Number();
-                if (CurrentChar == '“' || CurrentChar == '”' || CurrentChar == '"' || CurrentChar == '\'')
+                if (CurrentChar == '“' || CurrentChar == '”' || CurrentChar == '"' 
+                    || CurrentChar == '\'')
                     return Str();
                 if (CurrentChar == ':' || CurrentChar == '：')
                 {
