@@ -37,7 +37,7 @@
 program: (NEWLINE | stmt)*
 stmt: simple_stmt | compound_stmt
 simple_stmt: small_stmt NEWLINE
-small_stmt: (assign_stmt | fun)?
+small_stmt: (fun | assign_stmt)?
 fun: (NAME)? : args
 assign_stmt: NAME trailer* = expr
 
