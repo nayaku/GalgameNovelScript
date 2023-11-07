@@ -116,7 +116,7 @@ namespace GalgameNovelScript
             Eat(TokenType.ASSIGN);
 
             var right = Expr();
-            return new Assign(var, op, right);
+            return new BinOp(var, op, right);
         }
         public AST CompoundStmt()
         {
@@ -440,8 +440,8 @@ namespace GalgameNovelScript
         {
             // arglist: (expr)*
             var args = new List<AST>();
-            while (CurrentToken.Type != TokenType.RBRACK 
-                && CurrentToken.Type != TokenType.NEWLINE 
+            while (CurrentToken.Type != TokenType.RBRACK
+                && CurrentToken.Type != TokenType.NEWLINE
                 && CurrentToken.Type != TokenType.EOF)
             {
                 var expr = Expr();

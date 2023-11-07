@@ -79,18 +79,6 @@ namespace GalgameNovelScript
             Children = new List<AST>();
         }
     }
-    public class Assign : AST
-    {
-        public Var Left { get; set; }
-        public Token Op { get; set; }
-        public AST Right { get; set; }
-        public Assign(Var left, Token op, AST right)
-        {
-            Left = left;
-            Op = op;
-            Right = right;
-        }
-    }
     public class Var : AST
     {
         public Token Token { get; set; }
@@ -100,9 +88,6 @@ namespace GalgameNovelScript
             Token = token;
             Value = token.Value;
         }
-    }
-    public class NoOp : AST
-    {
     }
     public class Program : AST
     {
@@ -160,19 +145,6 @@ namespace GalgameNovelScript
         public Suite(List<AST> stmts)
         {
             Stmts = stmts;
-        }
-    }
-    public class ProcedureCall : AST
-    {
-        public Var ProcedureName { get; set; }
-        public List<AST> ActualParams { get; set; }
-        public Token Token { get; set; }
-        public object ProcedureSymbol { get; set; }
-        public ProcedureCall(Var procedureName, List<AST> actualParams, Token token)
-        {
-            ProcedureName = procedureName;
-            ActualParams = actualParams;
-            Token = token;
         }
     }
     public class Args : AST
