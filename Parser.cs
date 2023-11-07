@@ -90,8 +90,9 @@ namespace GalgameNovelScript
                 else
                     return AssginStmt(var);
             }
-            else
+            else if (CurrentToken.Type == TokenType.COLON)
                 return Fun(null);
+            return null;
         }
         public AST Fun(Var var)
         {

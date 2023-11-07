@@ -102,6 +102,9 @@ namespace GalgameNovelScript
                 }
                 Advance();
             }
+            // 判断是否是空行
+            if (CurrentChar == '\f' || CurrentChar == '\r' || CurrentChar == '\n')
+                return null;
             if (spaces > Indent.Peek())
             {
                 Indent.Push(spaces);
