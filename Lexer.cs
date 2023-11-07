@@ -220,7 +220,7 @@ namespace GalgameNovelScript
                 {
                     return NewLine();
                 }
-                if (CurrentChar == '#' || (CurrentChar == '/' && Peek() == '/') 
+                if (CurrentChar == '#' || (CurrentChar == '/' && Peek() == '/')
                     || (CurrentChar == '注' && Peek() == '释'))
                 {
                     SkipComment();
@@ -230,7 +230,7 @@ namespace GalgameNovelScript
                     return ID();
                 if (char.IsDigit(CurrentChar))
                     return Number();
-                if (CurrentChar == '“' || CurrentChar == '”' || CurrentChar == '"' 
+                if (CurrentChar == '“' || CurrentChar == '”' || CurrentChar == '"'
                     || CurrentChar == '\'')
                     return Str();
                 if (CurrentChar == ':' || CurrentChar == '：')
