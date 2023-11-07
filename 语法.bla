@@ -1,0 +1,62 @@
+#token NAME
+#token INT_CONST
+#token REAL_CONST
+#token STR
+#token NEWLINE
+#token INDENT
+#token DEDENT
+#token COLON
+#token LPAREN
+#token RPAREN
+#token LBARCK
+#token RBARCK
+#token ASSIGN
+#token COMMENT
+#token IF
+#token ELSEIF
+#token ELSE
+#token CASE
+#token WHEN
+#token EQ
+#token NE
+#token LT
+#token LE
+#token GT
+#token GE
+#token PLUS
+#token MINUS
+#token MUL
+#token DIV
+#token INT_DIV
+#token MOD
+#token POW
+#token AND
+#token OR
+
+
+program: (NEWLINE | stmt)*
+stmt: simple_stmt | compound_stmt
+simple_stmt: small_stmt NEWLINE
+small_stmt: (assign_stmt | fun)?
+fun: (NAME)? : args
+assign_stmt: NAME trailer* = expr
+
+compound_stmt: if_stmt | case_stmt
+if_stmt: IF expr suite (ELSEIF expr suit)* (ELSE suite)?
+case_stmt: CASE expr NEWLINE (WHEN expr? suite)*
+suite: NEWLINE INDENT stmt* DEDENT
+
+expr: or_test
+or_test: and_test (OR and_test)*
+and_test: not_test (AND not_test)*
+not_test: NOT not_test | comparsion
+comparsion: calculator (comp_op calculator)*
+comp_op: < | > | == | >= | <= | !=
+calculator:term ((+|-) term)*
+term:factor (( * | / | % | // ) factor)*
+factor: ( + | - ) factor | power
+power: atom trailer* (** factor)*
+atom: LPAREN expr RPAREN | fun | NAME | INT_CONST 
+	| REAL_CONST | STR | TRUE | FALSE | NONE 
+trailer: [args] | . NAME
+args: (expr)*
