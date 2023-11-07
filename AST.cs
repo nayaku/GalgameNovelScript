@@ -71,14 +71,6 @@ namespace GalgameNovelScript
             Expr = expr;
         }
     }
-    public class Compound : AST
-    {
-        public List<AST> Children { get; set; }
-        public Compound()
-        {
-            Children = new List<AST>();
-        }
-    }
     public class Var : AST
     {
         public Token Token { get; set; }
