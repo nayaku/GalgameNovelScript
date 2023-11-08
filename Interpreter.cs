@@ -53,9 +53,9 @@ namespace GalgameNovelScript
             else if (node.Op.Type == TokenType.POW)
                 return Math.Pow((float)Visit(node.Left), (float)Visit(node.Right));
             else if (node.Op.Type == TokenType.EQ)
-                return (dynamic)Visit(node.Left) == (dynamic)Visit(node.Right);
+                return Visit(node.Left).Equals(Visit(node.Right));
             else if (node.Op.Type == TokenType.NE)
-                return (dynamic)Visit(node.Left) != (dynamic)Visit(node.Right);
+                return !Visit(node.Left).Equals(Visit(node.Right));
             else if (node.Op.Type == TokenType.LT)
                 return (dynamic)Visit(node.Left) < (dynamic)Visit(node.Right);
             else if (node.Op.Type == TokenType.LE)
@@ -152,11 +152,8 @@ namespace GalgameNovelScript
         }
         public object VisitVar(Var node)
         {
-            var value = GLOBAL_SCOPE[node.Value];
-            if (value == null)
-            {
+            if (!GLOBAL_SCOPE.TryGetValue(node.Value, out var value))
                 GLOBAL_SCOPE[node.Value] = value = node.Value;
-            }
             return value;
         }
         public object VisitProgram(Program node)
@@ -189,10 +186,12 @@ namespace GalgameNovelScript
         }
         public object VisitIfStmt(IfStmt node)
         {
-            var condition = (bool)Visit(node.Condition);
+            var condition = true;
+            if (node.Condition != null)
+                condition = (bool)Visit(node.Condition);
             if (condition)
                 Visit(node.ThenStmt);
-            else
+            else if (node.ElseStmt != null)
                 Visit(node.ElseStmt);
             return null;
         }
@@ -209,7 +208,7 @@ namespace GalgameNovelScript
             }
             return null;
         }
-        public object VisitSuit(Suite node)
+        public object VisitSuite(Suite node)
         {
             foreach (var statement in node.Stmts)
             {
