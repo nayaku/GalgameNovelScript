@@ -128,14 +128,10 @@ namespace GalgameNovelScript
                     return value;
                 }
                 else
-                {
                     throw new Exception("未知的赋值操作符");
-                }
             }
             else
-            {
                 throw new Exception("未知的二元操作符");
-            }
         }
         public object VisitUnaryOp(UnaryOp node)
         {
@@ -146,14 +142,12 @@ namespace GalgameNovelScript
             else if (node.Token.Type == TokenType.NOT)
                 return !(dynamic)Visit(node.Expr);
             else
-            {
                 throw new Exception("未知的一元操作符");
-            }
         }
         public object VisitVar(Var node)
         {
             if (!GLOBAL_SCOPE.TryGetValue(node.Value, out var value))
-                GLOBAL_SCOPE[node.Value] = value = node.Value;
+                value = node.Value;
             return value;
         }
         public object VisitProgram(Program node)
@@ -179,9 +173,7 @@ namespace GalgameNovelScript
                 return func.DynamicInvoke(args.ToArray());
             }
             else
-            {
                 throw new Exception("未定义的标识符");
-            }
 
         }
         public object VisitIfStmt(IfStmt node)
@@ -197,16 +189,7 @@ namespace GalgameNovelScript
         }
         public object VisitCaseStmt(CaseStmt node)
         {
-            var condition = Visit(node.Condition);
-            foreach (var whenStmt in node.WhenStmts)
-            {
-                if (condition == Visit(whenStmt.Condition))
-                {
-                    Visit(whenStmt.ThenStmt);
-                    break;
-                }
-            }
-            return null;
+            throw new Exception("未实现");
         }
         public object VisitSuite(Suite node)
         {
