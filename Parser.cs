@@ -50,7 +50,8 @@ namespace GalgameNovelScript
                 else
                 {
                     var stmt = Stmt();
-                    node.Stmts.Add(stmt);
+                    if (stmt != null)
+                        node.Stmts.Add(stmt);
                 }
             }
             return node;
@@ -186,7 +187,8 @@ namespace GalgameNovelScript
             while (CurrentToken.Type != TokenType.DEDENT)
             {
                 var stmt = Stmt();
-                stmts.Add(stmt);
+                if (stmt != null)
+                    stmts.Add(stmt);
             }
             Eat(TokenType.DEDENT);
             return new Suite(stmts);
@@ -327,9 +329,7 @@ namespace GalgameNovelScript
                 return new UnaryOp(op, right);
             }
             else
-            {
                 return Power();
-            }
         }
         public AST Power()
         {
