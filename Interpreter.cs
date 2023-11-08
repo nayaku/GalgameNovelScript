@@ -51,7 +51,7 @@ namespace GalgameNovelScript
             else if (node.Op.Type == TokenType.MOD)
                 return (dynamic)Visit(node.Left) % (dynamic)Visit(node.Right);
             else if (node.Op.Type == TokenType.POW)
-                return Math.Pow((float)Visit(node.Left), (float)Visit(node.Right));
+                return Math.Pow(Convert.ToSingle(Visit(node.Left)), Convert.ToSingle(Visit(node.Right)));
             else if (node.Op.Type == TokenType.EQ)
                 return Visit(node.Left).Equals(Visit(node.Right));
             else if (node.Op.Type == TokenType.NE)

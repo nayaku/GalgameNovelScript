@@ -220,8 +220,7 @@ namespace GalgameNovelScript
                 {
                     return NewLine();
                 }
-                if (CurrentChar == '#' || (CurrentChar == '/' && Peek() == '/')
-                    || (CurrentChar == '注' && Peek() == '释'))
+                if (CurrentChar == '#' || (CurrentChar == '注' && Peek() == '释'))
                 {
                     SkipComment();
                     continue;
