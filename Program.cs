@@ -13,7 +13,13 @@ public class Program
             var lexer = new Lexer(text);
             var parser = new Parser(lexer);
             var tree = parser.Parse();
-            Console.WriteLine(tree);
+
+            var interpreter = new Interpreter(tree);
+            interpreter.GLOBAL_SCOPE["输出"] = new Action<object>(Console.WriteLine);
+            interpreter.GLOBAL_SCOPE["输入"] = new Func<string>(Console.ReadLine);
+            interpreter.Interpret();
+            // 暂停
+            Console.ReadLine();
         }
     }
 }
