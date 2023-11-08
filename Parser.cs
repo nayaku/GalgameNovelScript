@@ -95,7 +95,7 @@ namespace GalgameNovelScript
             // fun: (NAME)? : args
             // 上一步已经吃掉了NAME
             Eat(TokenType.COLON);
-            return new Fun(var, Args());
+            return new FunCall(var, Args());
         }
         public AST AssginStmt(Var var)
         {
@@ -113,7 +113,7 @@ namespace GalgameNovelScript
             Eat(TokenType.ASSIGN);
 
             var right = Expr();
-            return new BinOp(var, op, right);
+            return new BinOp(node, op, right);
         }
         public AST CompoundStmt()
         {

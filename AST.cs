@@ -70,11 +70,11 @@ namespace GalgameNovelScript
     public class Var : AST
     {
         public Token Token { get; set; }
-        public object Value { get; set; }
+        public string Value { get; set; }
         public Var(Token token)
         {
             Token = token;
-            Value = token.Value;
+            Value = (string)token.Value;
         }
     }
     public class Program : AST
@@ -85,11 +85,11 @@ namespace GalgameNovelScript
             Stmts = new List<AST>();
         }
     }
-    public class Fun : AST
+    public class FunCall : AST
     {
         public Var VarNode { get; set; }
         public Args ActualParams { get; set; }
-        public Fun(Var varNode, Args actualParams)
+        public FunCall(Var varNode, Args actualParams)
         {
             VarNode = varNode;
             ActualParams = actualParams;
