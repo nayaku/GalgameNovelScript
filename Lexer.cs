@@ -55,10 +55,9 @@ namespace GalgameNovelScript
         }
         public void SkipWhitespace()
         {
-            while (CurrentChar == ' ' || CurrentChar == '\t')
-            {
+            while (CurrentChar == ' ' || CurrentChar == '\t' ||
+                CurrentChar == '\u00A0' || CurrentChar == '\u3000')
                 Advance();
-            }
         }
         public void SkipComment()
         {
@@ -157,11 +156,11 @@ namespace GalgameNovelScript
         public Token ID()
         {
             var result = new List<char>();
-            if (char.IsLetter(CurrentChar) || CurrentChar == '_')
+            if (_IsLetter())
             {
                 result.Add(CurrentChar);
                 Advance();
-                while (char.IsLetter(CurrentChar) || CurrentChar == '_' || char.IsDigit(CurrentChar))
+                while (_IsLetter() || char.IsDigit(CurrentChar))
                 {
                     result.Add(CurrentChar);
                     Advance();
@@ -211,12 +210,14 @@ namespace GalgameNovelScript
                         return token;
                     LineStart = false;
                 }
-                if (CurrentChar == ' ' || CurrentChar == '\t')
+                if (CurrentChar == ' ' || CurrentChar == '\t' ||
+                    CurrentChar == '\u00A0' || CurrentChar == '\u3000')
                 {
                     SkipWhitespace();
                     continue;
                 }
-                if (CurrentChar == '\f' || CurrentChar == '\r' || CurrentChar == '\n')
+                if (CurrentChar == '\f' || CurrentChar == '\r' ||
+                    CurrentChar == '\n')
                 {
                     return NewLine();
                 }
@@ -225,8 +226,6 @@ namespace GalgameNovelScript
                     SkipComment();
                     continue;
                 }
-                if (char.IsLetter(CurrentChar))
-                    return ID();
                 if (char.IsDigit(CurrentChar))
                     return Number();
                 if (CurrentChar == '“' || CurrentChar == '”' || CurrentChar == '"'
@@ -341,8 +340,15 @@ namespace GalgameNovelScript
                 {
                     return new Token(TokenType.EOF, null, Line, Column);
                 }
+                if (_IsLetter())
+                    return ID();
                 Error();
             }
+        }
+        private bool _IsLetter()
+        {
+            return char.IsLetter(CurrentChar) || CurrentChar == '_' ||
+                (CurrentChar > '\u007F' && Token.ChineseSymbol.IndexOf(CurrentChar) == -1);
         }
     }
 }
