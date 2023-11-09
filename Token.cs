@@ -51,7 +51,7 @@ namespace GalgameNovelScript
         public object Value { get; set; }
         public int Line { get; set; }
         public int Column { get; set; }
-        public static Dictionary<string, TokenType> ReservedKeywords = new Dictionary<string, TokenType>()
+        public static Dictionary<string, TokenType> ReservedKeywords { get; } = new Dictionary<string, TokenType>()
         {
             {"注释",TokenType.COMMENT},
             {"如果",TokenType.IF},
@@ -59,32 +59,20 @@ namespace GalgameNovelScript
             {"否则如果",TokenType.ELIF},
             {"选择",TokenType.CASE},
             {"选项",TokenType.WHEN},
-            {"等于",TokenType.EQ},
-            {"不等于",TokenType.NE},
-            {"小于",TokenType.LT},
-            {"小等于",TokenType.LE},
-            {"大于",TokenType.GT},
-            {"大等于",TokenType.GE},
-            {"加",TokenType.PLUS},
-            {"减",TokenType.MINUS},
-            {"乘",TokenType.MUL},
-            {"除",TokenType.DIV},
-            {"取整",TokenType.FLOORDIV},
-            {"取余",TokenType.MOD},
-            {"幂",TokenType.POW},
             {"非",TokenType.NOT},
-            {"与",TokenType.AND},
-            {"或",TokenType.OR},
-            {"赋值",TokenType.ASSIGN},
+            {"并且",TokenType.AND},
+            {"或者",TokenType.OR},
+            {"幂",TokenType.POW},
             {"true",TokenType.TRUE},
             {"false",TokenType.FALSE},
             {"none",TokenType.NONE},
             {"真",TokenType.TRUE},
-            {"开",TokenType.TRUE},
             {"假",TokenType.FALSE},
+            {"开",TokenType.TRUE},
             {"关",TokenType.FALSE},
             {"空",TokenType.NONE},
         };
+        public static string ChineseSymbol { get; } = "（）【】：“”‘’　";
 
         public Token(TokenType type, object value, int line, int column)
         {
