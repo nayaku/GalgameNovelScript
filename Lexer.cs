@@ -153,18 +153,17 @@ namespace GalgameNovelScript
         /// 返回一个保留字
         /// </summary>
         /// <returns></returns>
-        public Token ID()
+        public Token IDOrStr()
         {
             var result = new List<char>();
-            if (_IsLetter())
+            // 第一次遍历时，CurrentChar是字母，外部已经判断过了
+            while (IsLetter() || char.IsDigit(CurrentChar))
             {
+                // 支持转义字符
+                if (CurrentChar == '\\')
+                    Advance();
                 result.Add(CurrentChar);
                 Advance();
-                while (_IsLetter() || char.IsDigit(CurrentChar))
-                {
-                    result.Add(CurrentChar);
-                    Advance();
-                }
             }
             var str = new string(result.ToArray());
             var token = Token.GetReservedKeywords(str, Line, Column);
@@ -340,14 +339,14 @@ namespace GalgameNovelScript
                 {
                     return new Token(TokenType.EOF, null, Line, Column);
                 }
-                if (_IsLetter())
-                    return ID();
+                if (IsLetter())
+                    return IDOrStr();
                 Error();
             }
         }
-        private bool _IsLetter()
+        private bool IsLetter()
         {
-            return char.IsLetter(CurrentChar) || CurrentChar == '_' ||
+            return char.IsLetter(CurrentChar) || CurrentChar == '_' || CurrentChar == '\\' ||
                 (CurrentChar > '\u007F' && Token.ChineseSymbol.IndexOf(CurrentChar) == -1);
         }
     }
