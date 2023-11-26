@@ -6,19 +6,22 @@ namespace GalgameNovelScript
 {
     public class Interpreter : NodeVisitor
     {
-        public Dictionary<string, object> GLOBAL_SCOPE = new Dictionary<string, object>();
+        public CallStack CallStack { get; set; } = new CallStack();
+        public ActivationRecord GlobalScope { get; set; } = new ActivationRecord("global", 1);
+        public ActivationRecord CurrenScope => CallStack.Peek();
         public AST Tree { get; set; }
         public Interpreter(AST tree)
         {
             Tree = tree;
+            CallStack.Push(GlobalScope);
         }
         public void AddToGlobalScope(string key, object value)
         {
-            GLOBAL_SCOPE[key] = value;
+            GlobalScope.AddMember(key, value);
         }
         public object GetFromGlobalScope(string key)
         {
-            return GLOBAL_SCOPE[key];
+            return GlobalScope.GetMember(key);
         }
         public object VisitNum(Num node)
         {
@@ -105,7 +108,7 @@ namespace GalgameNovelScript
                 {
                     var left = (Var)node.Left;
                     var value = Visit(node.Right);
-                    GLOBAL_SCOPE[left.Value] = value;
+                    CurrenScope.AddMember(left.Value, value);
                     return value;
                 }
                 else if (node.Left is BinOp)
@@ -146,8 +149,7 @@ namespace GalgameNovelScript
         }
         public object VisitVar(Var node)
         {
-            if (!GLOBAL_SCOPE.TryGetValue(node.Value, out var value))
-                value = node.Value;
+            var value = CurrenScope.GetMember(node.Value) ?? node.Value;
             return value;
         }
         public object VisitProgram(Program node)
@@ -160,8 +162,7 @@ namespace GalgameNovelScript
         }
         public object VisitFunCall(FunCall node)
         {
-            var fun = GLOBAL_SCOPE[node.VarNode.Value];
-            if (fun == null)
+            var fun = CurrenScope.GetMember(node.VarNode.Value) ??
                 throw new Exception("未定义的标识符");
             if (fun is Delegate func)
             {
@@ -178,13 +179,26 @@ namespace GalgameNovelScript
         }
         public object VisitIfStmt(IfStmt node)
         {
-            var condition = true;
-            if (node.Condition != null)
-                condition = (bool)Visit(node.Condition);
-            if (condition)
-                Visit(node.ThenStmt);
-            else if (node.ElseStmt != null)
-                Visit(node.ElseStmt);
+            foreach ((var condition, var thenStmt) in node.Stmts)
+            {
+                var toVisit = false;
+                if (condition is null)
+                    toVisit = true;
+                else
+                {
+                    var result = Visit(condition);
+                    if (result is bool v && v)
+                        toVisit = true;
+                }
+                if (toVisit)
+                {
+                    var activeRecord = new ActivationRecord("if", CurrenScope.Level + 1, CurrenScope);
+                    CallStack.Push(activeRecord);
+                    Visit(thenStmt);
+                    CallStack.Pop();
+                    break;
+                }
+            }
             return null;
         }
         public object VisitCaseStmt(CaseStmt node)

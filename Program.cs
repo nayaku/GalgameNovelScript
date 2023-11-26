@@ -15,8 +15,8 @@ public class Program
             var tree = parser.Parse();
 
             var interpreter = new Interpreter(tree);
-            interpreter.GLOBAL_SCOPE["输出"] = new Action<object>(Console.WriteLine);
-            interpreter.GLOBAL_SCOPE["输入"] = new Func<string>(Console.ReadLine);
+            interpreter.AddToGlobalScope("输入", new Func<string>(Console.ReadLine));
+            interpreter.AddToGlobalScope("输出", new Action<object>(Console.WriteLine));
             interpreter.Interpret();
             // 暂停
             Console.ReadLine();

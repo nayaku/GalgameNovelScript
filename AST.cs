@@ -97,14 +97,10 @@ namespace GalgameNovelScript
     }
     public class IfStmt : AST
     {
-        public AST Condition { get; set; }
-        public AST ThenStmt { get; set; }
-        public AST ElseStmt { get; set; }
-        public IfStmt(AST condition, AST thenStmt, AST elseStmt)
+        public List<(AST Condition, AST ThenStmt)> Stmts { get; set; }
+        public IfStmt(List<(AST condition, AST thenStmt)> stmts)
         {
-            Condition = condition;
-            ThenStmt = thenStmt;
-            ElseStmt = elseStmt;
+            Stmts = stmts;
         }
     }
     public class CaseStmt : AST
