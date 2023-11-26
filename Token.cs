@@ -54,6 +54,7 @@ namespace GalgameNovelScript
         public static Dictionary<string, TokenType> ReservedKeywords { get; } = new Dictionary<string, TokenType>()
         {
             {"注释",TokenType.COMMENT},
+            {"的",TokenType.DOT },
             {"如果",TokenType.IF},
             {"否则",TokenType.ELSE},
             {"否则如果",TokenType.ELIF},
