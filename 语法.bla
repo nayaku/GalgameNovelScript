@@ -12,6 +12,7 @@
 #token RBARCK
 #token ASSIGN
 #token COMMENT
+#token DOT
 #token IF
 #token ELSEIF
 #token ELSE
@@ -27,18 +28,22 @@
 #token MINUS
 #token MUL
 #token DIV
-#token INT_DIV
+#token FLOORDIV
 #token MOD
 #token POW
 #token AND
 #token OR
+#token TRUE
+#token FALSE
+#token NONE
+#token EOF
 
 
 program: (NEWLINE | stmt)*
 stmt: simple_stmt | compound_stmt
 simple_stmt: small_stmt NEWLINE
 small_stmt: (fun | assign_stmt)?
-fun: (NAME)? : args
+fun: (NAME)? COLON args
 assign_stmt: NAME trailer* = expr
 
 compound_stmt: if_stmt | case_stmt
@@ -58,5 +63,5 @@ factor: ( + | - ) factor | power
 power: atom trailer* (** factor)*
 atom: LPAREN expr RPAREN | fun | NAME | INT_CONST 
 	| REAL_CONST | STR | TRUE | FALSE | NONE 
-trailer: [args] | . NAME
+trailer: LPAREN args RBARCK | . NAME
 args: (expr)*
