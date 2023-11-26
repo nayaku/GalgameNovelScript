@@ -128,8 +128,10 @@ namespace GalgameNovelScript
         {
             // if_stmt: IF expr suite (ELIF expr suite)* (ELSE suite)?
             Eat(TokenType.IF);
+            var ifStmt = new List<(AST Condition, AST ThenStmt)>();
             var expr = Expr();
             var thenSuite = Suite();
+            ifStmt.Add((expr, thenSuite));
             List<IfStmt> elifs = null;
             if (CurrentToken.Type == TokenType.ELIF)
             {
@@ -139,7 +141,7 @@ namespace GalgameNovelScript
                     Eat(TokenType.ELIF);
                     var elifExpr = Expr();
                     var elifSuite = Suite();
-                    elifs.Add(new IfStmt(elifExpr, elifSuite, null));
+                    ifStmt.Add((elifExpr, elifSuite));
                 }
             }
             if (CurrentToken.Type == TokenType.ELSE)
@@ -148,14 +150,10 @@ namespace GalgameNovelScript
                     elifs = new List<IfStmt>();
                 Eat(TokenType.ELSE);
                 var elseSuite = Suite();
-                var el = new IfStmt(null, elseSuite, null);
-                elifs.Add(el);
+                ifStmt.Add((null, elseSuite));
             }
-            if (elifs != null)
-                for (int i = 0; i < elifs.Count - 1; i++)
-                    elifs[i].ElseStmt = elifs[i + 1];
 
-            return new IfStmt(expr, thenSuite, elifs?[0]);
+            return new IfStmt(ifStmt);
         }
         public AST CaseStmt()
         {
