@@ -28,6 +28,9 @@ namespace GalgameNovelScript
             var message = string.Format("无法识别的字符{0}，位于{1}行{2}列。", CurrentChar, Line, Column);
             throw new Exception(message);
         }
+        /// <summary>
+        /// 朝前移动一个字符
+        /// </summary>
         public void Advance()
         {
             Pos++;
@@ -41,6 +44,10 @@ namespace GalgameNovelScript
                 Column++;
             }
         }
+        /// <summary>
+        /// 返回当前字符的下一个字符
+        /// </summary>
+        /// <returns></returns>
         public char Peek()
         {
             var peekPos = Pos + 1;
