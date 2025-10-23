@@ -1,6 +1,4 @@
 ﻿using GalgameNovelScript;
-using System;
-using System.IO;
 
 public class Program
 {
