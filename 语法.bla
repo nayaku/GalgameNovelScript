@@ -14,9 +14,10 @@
 #token COMMENT
 #token DOT
 #token IF
-#token ELSEIF
+#token ELIF
 #token ELSE
 #token CASE
+#token WHEN
 #token LOOP
 #token BREAK
 #token EQ
@@ -45,14 +46,14 @@ program: (NEWLINE | stmt)*
 stmt: simple_stmt | compound_stmt
 simple_stmt: small_stmt NEWLINE
 small_stmt: (fun | assign_stmt)?
-fun: (NAME)? COLON args
+fun: (NAME)? COLON (args)?
 assign_stmt: NAME trailer* = expr
 
 compound_stmt: if_stmt | case_stmt | loop_stmt
-if_stmt: IF expr suite (ELSEIF expr suit)* (ELSE suite)?
-case_stmt: CASE (when_stmt)+
-when_stmt: NEWLINE INDENT expr suit DEDENT
-loop_stmt: LOOP (expr) suit
+if_stmt: IF expr suite (ELIF expr suit)* (ELSE suite)?
+case_stmt: CASE expr? NEWLINE INDENT (when_stmt)+ DEDENT
+when_stmt: WHEN expr suit
+loop_stmt: LOOP (expr)? suit
 suite: NEWLINE INDENT stmt* DEDENT
 
 expr: or_test
