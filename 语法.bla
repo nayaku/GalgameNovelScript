@@ -46,13 +46,13 @@ program: (NEWLINE | stmt)*
 stmt: simple_stmt | compound_stmt
 simple_stmt: small_stmt NEWLINE
 small_stmt: (fun | assign_stmt)?
-fun: (NAME)? COLON (args)?
+fun: (NAME)? COLON (value)?
 assign_stmt: NAME trailer* = expr
 
 compound_stmt: if_stmt | case_stmt | loop_stmt
 if_stmt: IF expr suite (ELIF expr suit)* (ELSE suite)?
-case_stmt: CASE expr? NEWLINE INDENT (when_stmt)+ DEDENT
-when_stmt: WHEN expr suit
+case_stmt: CASE NAME? NEWLINE INDENT (when_stmt)+ DEDENT
+when_stmt: WHEN NAME suit
 loop_stmt: LOOP (expr)? suit
 suite: NEWLINE INDENT stmt* DEDENT
 
@@ -66,7 +66,7 @@ calculator: term ((+|-) term)*
 term: factor (( * | / | % | // ) factor)*
 factor: ( + | - ) factor | power
 power: atom trailer* (** factor)*
-atom: LPAREN expr RPAREN | fun | NAME | INT_CONST 
-	| REAL_CONST | STR | TRUE | FALSE | NONE
+atom: LPAREN expr RPAREN | fun | value
+value: NAME | INT_CONST | REAL_CONST | STR | TRUE | FALSE | NONE
 trailer: LPAREN args RBARCK | . NAME
 args: (expr)*
