@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Folder Name="/解决方案项/">
+    <File Path="测试.ns" />
+    <File Path="语法.bla" />
+  </Folder>
   <Project Path="GalgameNovelScript/GalgameNovelScript.csproj" Id="3a04b2ca-968a-4896-b0f6-e0c30bee0cdf" />
-  <Project Path="GalgameNovelScriptConsole/GalgameNovelScriptConsole.csproj" Id="949da59b-42b0-4f32-8abc-112377b900d2" />
+  <Project Path="GalgameNovelScriptTest/GalgameNovelScriptTest.csproj" Id="bb54e97f-e0e0-4f75-af98-bdc3dc63c58b" />
 </Solution>

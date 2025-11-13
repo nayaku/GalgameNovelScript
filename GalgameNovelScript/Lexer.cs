@@ -1,32 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace GalgameNovelScript
 {
     public class Lexer
     {
-        public string Text { get; set; }
-        public int Pos { get; set; }
-        public char CurrentChar { get; set; }
-        public int Line { get; set; }
-        public int Column { get; set; }
-        public Stack<int> Indent { get; set; }
-        public bool LineStart { get; set; }
+        public string Text { get; private set; }
+        public int Pos { get; private set; }
+        public char CurrentChar { get; private set; }
+        public int Line { get; private set; }
+        public int Column { get; private set; }
+        public Stack<int> Indent { get; private set; }
+        public Queue<int> UneatIndent { get; private set; }
+        public bool LineStart { get; private set; }
         public Lexer(string text)
         {
-            Text = text;
+            Text = TextNormalize(text);
             Pos = 0;
             CurrentChar = Text[Pos];
             Line = 1;
             Column = 1;
             Indent = new Stack<int>();
+            UneatIndent = new Queue<int>();
             Indent.Push(0);
             LineStart = true;
         }
         public void Error()
         {
             var message = string.Format("无法识别的字符{0}，位于{1}行{2}列。", CurrentChar, Line, Column);
-            throw new Exception(message);
+            throw new LexerException(ErrorCode.UNEXPECTED_TOKEN, Line, Column, CurrentChar, message);
+        }
+        private string TextNormalize(string text)
+        {
+            return text.Replace("\r\n", "\n").Replace("\r", "\n");
         }
         /// <summary>
         /// 朝前移动一个字符
@@ -34,7 +39,7 @@ namespace GalgameNovelScript
         public void Advance()
         {
             Pos++;
-            if (Pos > Text.Length - 1)
+            if (Pos >= Text.Length)
             {
                 CurrentChar = '\0';
             }
@@ -51,7 +56,7 @@ namespace GalgameNovelScript
         public char Peek()
         {
             var peekPos = Pos + 1;
-            if (peekPos > Text.Length - 1)
+            if (peekPos >= Text.Length)
             {
                 return '\0';
             }
@@ -62,29 +67,19 @@ namespace GalgameNovelScript
         }
         public void SkipWhitespace()
         {
-            while (CurrentChar == ' ' || CurrentChar == '\t' ||
-                CurrentChar == '\u00A0' || CurrentChar == '\u3000')
+            while (CurrentChar != '\0' && CurrentChar != '\n' && char.IsWhiteSpace(CurrentChar))
                 Advance();
         }
         public void SkipComment()
         {
-            while (CurrentChar != '\0' && CurrentChar != '\u000C' &&
-                CurrentChar != '\n' && CurrentChar != '\r' && CurrentChar != '\f')
-            {
+            while (CurrentChar != '\0' && CurrentChar != '\n')
                 Advance();
-            }
+            if (CurrentChar == '\n')
+                NewLine();
         }
         public Token NewLine()
         {
-            if (CurrentChar == '\f')
-                Advance();
-            else if (CurrentChar == '\r')
-            {
-                Advance();
-                if (CurrentChar == '\n')
-                    Advance();
-            }
-            else if (CurrentChar == '\n')
+            if (CurrentChar == '\n')
             {
                 Advance();
             }
@@ -93,14 +88,14 @@ namespace GalgameNovelScript
             LineStart = true;
             return new Token(TokenType.NEWLINE, null, Line, Column);
         }
-        public Token Dent()
+        public bool HasDent()
         {
             var spaces = 0;
             while (CurrentChar == ' ' || CurrentChar == '\t')
             {
                 if (CurrentChar == '\t')
                 {
-                    spaces += 8;
+                    spaces += 4;
                 }
                 else
                 {
@@ -108,20 +103,49 @@ namespace GalgameNovelScript
                 }
                 Advance();
             }
-            // 判断是否是空行
-            if (CurrentChar == '\f' || CurrentChar == '\r' || CurrentChar == '\n')
-                return null;
+
+            // 空行
+            if (CurrentChar == '\n')
+            {
+                NewLine();
+                return false;
+            }
+            if (CurrentChar == '#' || CurrentChar == '；' || CurrentChar == ';')
+            {
+                SkipComment();
+                return false;
+            }
+
+            // 不是空行，处理缩进
+            LineStart = false;
+            while (spaces < Indent.Peek())
+            {
+                var topIndent = Indent.Pop();
+                UneatIndent.Enqueue(-topIndent);
+            }
             if (spaces > Indent.Peek())
             {
-                Indent.Push(spaces);
-                return new Token(TokenType.INDENT, spaces, Line, Column);
+                UneatIndent.Enqueue(spaces);
             }
-            else if (spaces < Indent.Peek() && Column == 1)
+            return true;
+        }
+        public Token? CheckUneatIndent()
+        {
+            Token? token = null;
+            if (UneatIndent.Count > 0)
             {
-                Indent.Pop();
-                return new Token(TokenType.DEDENT, spaces, Line, Column);
+                var indent = UneatIndent.Dequeue();
+                if (indent > 0)
+                {
+                    Indent.Push(indent);
+                    token = new Token(TokenType.INDENT, indent, Line, Column);
+                }
+                else
+                {
+                    token = new Token(TokenType.DEDENT, -indent, Line, Column);
+                }
             }
-            return null;
+            return token;
         }
         /// <summary>
         /// 返回一个数值
@@ -164,7 +188,7 @@ namespace GalgameNovelScript
         {
             var result = new List<char>();
             // 第一次遍历时，CurrentChar是字母，外部已经判断过了
-            while (IsLetter() || char.IsDigit(CurrentChar))
+            while (!char.IsWhiteSpace(CurrentChar) && Token.ChineseSymbol.IndexOf(CurrentChar) == -1)
             {
                 // 支持转义字符
                 if (CurrentChar == '\\')
@@ -174,10 +198,7 @@ namespace GalgameNovelScript
             }
             var str = new string(result.ToArray());
             var token = Token.GetReservedKeywords(str, Line, Column);
-            if (token == null)
-            {
-                token = new Token(TokenType.NAME, str, Line, Column);
-            }
+            token ??= new Token(TokenType.NAME, str, Line, Column);
             return token;
         }
         /// <summary>
@@ -189,9 +210,9 @@ namespace GalgameNovelScript
             var result = new List<char>();
             var endChar = CurrentChar;
             if (endChar == '“')
-            {
                 endChar = '”';
-            }
+            if (endChar == '‘')
+                endChar = '’';
             Advance();
             while (CurrentChar != endChar)
             {
@@ -209,38 +230,33 @@ namespace GalgameNovelScript
         {
             while (true)
             {
-                if (LineStart)
-                {
-                    var token = Dent();
-                    if (token != null)
-                        return token;
-                    LineStart = false;
-                }
-                if (CurrentChar == ' ' || CurrentChar == '\t' ||
-                    CurrentChar == '\u00A0' || CurrentChar == '\u3000')
+                if (LineStart && !HasDent())
+                    continue;
+
+                var uneatIndentToken = CheckUneatIndent();
+                if (uneatIndentToken != null)
+                    return uneatIndentToken;
+                if (CurrentChar != '\n' && char.IsWhiteSpace(CurrentChar))
                 {
                     SkipWhitespace();
                     continue;
                 }
-                if (CurrentChar == '\f' || CurrentChar == '\r' ||
-                    CurrentChar == '\n')
+                if (CurrentChar == '\n')
                 {
                     return NewLine();
                 }
-                if (CurrentChar == '#' || (CurrentChar == '注' && Peek() == '释'))
-                {
-                    SkipComment();
-                    continue;
-                }
                 if (char.IsDigit(CurrentChar))
                     return Number();
-                if (CurrentChar == '“' || CurrentChar == '”' || CurrentChar == '"'
+                if (CurrentChar == '“' || CurrentChar == '‘' || CurrentChar == '"'
                     || CurrentChar == '\'')
+                {
                     return Str();
+                }
+
                 if (CurrentChar == ':' || CurrentChar == '：')
                 {
                     Advance();
-                    return new Token(TokenType.COLON, ":", Line, Column);
+                    return new Token(TokenType.COLON, ':', Line, Column);
                 }
                 if (CurrentChar == '=')
                 {
@@ -250,9 +266,9 @@ namespace GalgameNovelScript
                         Advance();
                         return new Token(TokenType.EQ, "==", Line, Column);
                     }
-                    return new Token(TokenType.ASSIGN, "=", Line, Column);
+                    return new Token(TokenType.ASSIGN, '=', Line, Column);
                 }
-                if (CurrentChar == '!')
+                if (CurrentChar == '!' || CurrentChar == '！')
                 {
                     Advance();
                     if (CurrentChar == '=')
@@ -337,7 +353,7 @@ namespace GalgameNovelScript
                     Advance();
                     return new Token(TokenType.RBRACK, "]", Line, Column);
                 }
-                if (CurrentChar == '.')
+                if (CurrentChar == '.' || CurrentChar == '。' || CurrentChar == '的')
                 {
                     Advance();
                     return new Token(TokenType.DOT, ".", Line, Column);

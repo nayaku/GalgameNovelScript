@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace GalgameNovelScript
 {
@@ -7,49 +8,36 @@ namespace GalgameNovelScript
     }
     public class Num : AST
     {
-        public Token Token { get; set; }
-        public object Value { get; set; }
+        public double Value { get; }
         public Num(Token token)
         {
-            Token = token;
-            Value = token.Value;
+            Value = Convert.ToDouble(token.Value);
         }
     }
     public class Str : AST
     {
-        public Token Token { get; set; }
-        public object Value { get; set; }
+        public string Value { get; }
         public Str(Token token)
         {
-            Token = token;
-            Value = token.Value;
+            Value = (string)token.Value!;
         }
     }
     public class Boolean : AST
     {
-        public Token Token { get; set; }
-        public object Value { get; set; }
+        public bool Value { get; }
         public Boolean(Token token)
         {
-            Token = token;
-            Value = token.Value;
+            Value = token.Type == TokenType.TRUE;
         }
     }
     public class None : AST
     {
-        public Token Token { get; set; }
-        public object Value { get; set; }
-        public None(Token token)
-        {
-            Token = token;
-            Value = token.Value;
-        }
     }
     public class BinOp : AST
     {
-        public AST Left { get; set; }
-        public Token Op { get; set; }
-        public AST Right { get; set; }
+        public AST Left { get; }
+        public Token Op { get; }
+        public AST Right { get; }
         public BinOp(AST left, Token op, AST right)
         {
             Left = left;
@@ -59,8 +47,8 @@ namespace GalgameNovelScript
     }
     public class UnaryOp : AST
     {
-        public Token Token { get; set; }
-        public AST Expr { get; set; }
+        public Token Token { get; }
+        public AST Expr { get; }
         public UnaryOp(Token token, AST expr)
         {
             Token = token;
@@ -69,17 +57,17 @@ namespace GalgameNovelScript
     }
     public class Var : AST
     {
-        public Token Token { get; set; }
-        public string Value { get; set; }
+        public Token Token { get; }
+        public string Value { get; }
         public Var(Token token)
         {
             Token = token;
-            Value = (string)token.Value;
+            Value = (string)token.Value!;
         }
     }
     public class Program : AST
     {
-        public List<AST> Stmts { get; set; }
+        public List<AST> Stmts { get; }
         public Program()
         {
             Stmts = new List<AST>();
@@ -87,45 +75,45 @@ namespace GalgameNovelScript
     }
     public class FunCall : AST
     {
-        public Var VarNode { get; set; }
-        public Args ActualParams { get; set; }
-        public FunCall(Var varNode, Args actualParams)
+        public Var? VarNode { get; }
+        public List<AST> Parms { get; }
+        public FunCall(Var? varNode, List<AST> parms)
         {
             VarNode = varNode;
-            ActualParams = actualParams;
+            Parms = parms;
         }
     }
     public class IfStmt : AST
     {
-        public List<(AST Condition, AST ThenStmt)> Stmts { get; set; }
-        public IfStmt(List<(AST condition, AST thenStmt)> stmts)
+        public List<(AST? Condition, AST ThenStmt)> Stmts { get; }
+        public IfStmt(List<(AST? condition, AST thenStmt)> stmts)
         {
             Stmts = stmts;
         }
     }
-    public class CaseStmt : AST
+    public class Case : AST
     {
-        public AST Condition { get; set; }
-        public List<WhenStmt> WhenStmts { get; set; }
-        public CaseStmt(AST condition, List<WhenStmt> whenStmts)
+        public AST? CaseTip { get; }
+        public List<When> Whens { get; }
+        public Case(AST? caseTip, List<When> whens)
         {
-            Condition = condition;
-            WhenStmts = whenStmts;
+            CaseTip = caseTip;
+            Whens = whens;
         }
     }
-    public class WhenStmt : AST
+    public class When : AST
     {
-        public AST Condition { get; set; }
-        public AST ThenStmt { get; set; }
-        public WhenStmt(AST condition, AST thenStmt)
+        public AST Option { get; }
+        public AST Then { get; }
+        public When(AST option, AST then)
         {
-            Condition = condition;
-            ThenStmt = thenStmt;
+            Option = option;
+            Then = then;
         }
     }
     public class Suite : AST
     {
-        public List<AST> Stmts { get; set; }
+        public List<AST> Stmts { get; }
         public Suite(List<AST> stmts)
         {
             Stmts = stmts;
@@ -133,11 +121,34 @@ namespace GalgameNovelScript
     }
     public class Args : AST
     {
-        public List<AST> ArgsList { get; set; }
+        public List<AST> ArgsList { get; }
         public Args(List<AST> argsList)
         {
             ArgsList = argsList;
         }
     }
-
+    public class Loop : AST
+    {
+        public AST? Condition { get; }
+        public AST Body { get; }
+        public Loop(AST? condition, AST body)
+        {
+            Condition = condition;
+            Body = body;
+        }
+    }
+    public class Break : AST
+    {
+    }
+    public class Continue : AST
+    {
+    }
+    public class Return : AST
+    {
+        public AST? Expr { get; }
+        public Return(AST? expr)
+        {
+            Expr = expr;
+        }
+    }
 }

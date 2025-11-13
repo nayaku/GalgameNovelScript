@@ -9,7 +9,7 @@ namespace GalgameNovelScript
         public Dictionary<string, object> Members { get; set; } = new Dictionary<string, object>();
         // 作用域链
         public ActivationRecord EnclosingScope { get; set; }
-        public ActivationRecord(string name, int level, ActivationRecord enclosingScope = null)
+        public ActivationRecord(string name, int level, ActivationRecord? enclosingScope = null)
         {
             Name = name;
             Level = level;
@@ -19,7 +19,7 @@ namespace GalgameNovelScript
         {
             Members[name] = value;
         }
-        public object GetMember(string name)
+        public object? GetMember(string name)
         {
             if (Members.ContainsKey(name))
                 return Members[name];

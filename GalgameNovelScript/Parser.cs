@@ -11,10 +11,11 @@ namespace GalgameNovelScript
             Lexer = lexer;
             CurrentToken = Lexer.GetNextToken();
         }
-        public void Error(ErrorCode errorCode, Token token)
+        public void Error(ErrorCode errorCode, TokenType[] expectTokenType)
         {
-            var message = string.Format("错误：{0}->{1}", ErrorCodeHandle.GetError(errorCode), token);
-            throw new ParserException(errorCode, token, message);
+            var expectTypes = string.Join(", ", expectTokenType);
+            var message = string.Format("错误：{0}: 期望的TokenType是 {1}，但得到的是 {2}", ErrorCodeHandle.GetError(errorCode), expectTypes, CurrentToken);
+            throw new ParserException(errorCode, CurrentToken, expectTokenType, message);
         }
         /// <summary>
         /// 将当前令牌类型与传递的令牌进行比较输入，
@@ -25,13 +26,9 @@ namespace GalgameNovelScript
         public void Eat(TokenType tokenType)
         {
             if (CurrentToken.Type == tokenType)
-            {
                 CurrentToken = Lexer.GetNextToken();
-            }
             else
-            {
-                Error(ErrorCode.UNEXPECTED_TOKEN, CurrentToken);
-            }
+                Error(ErrorCode.UNEXPECTED_TOKEN, new TokenType[] { tokenType });
         }
         public AST Program()
         {
@@ -59,7 +56,9 @@ namespace GalgameNovelScript
         public AST Stmt()
         {
             // stmt: simple_stmt | compound_stmt
-            if (CurrentToken.Type == TokenType.IF || CurrentToken.Type == TokenType.CASE)
+            if (CurrentToken.Type == TokenType.IF
+                || CurrentToken.Type == TokenType.CASE
+                || CurrentToken.Type == TokenType.LOOP)
             {
                 return CompoundStmt();
             }
@@ -77,26 +76,36 @@ namespace GalgameNovelScript
         }
         public AST SmallStmt()
         {
-            // small_stmt: (fun | assign_stmt)?
-            if (CurrentToken.Type == TokenType.NAME)
-            {
-                var var = new Var(CurrentToken);
-                Eat(TokenType.NAME);
-                if (CurrentToken.Type == TokenType.COLON)
-                    return Fun(var);
-                else
-                    return AssginStmt(var);
-            }
-            else if (CurrentToken.Type == TokenType.COLON)
+            // small_stmt: (fun | assign_stmt | break_stmt | continue_stmt | return_stmt)?
+            if (CurrentToken.Type == TokenType.COLON)
                 return Fun(null);
-            return null;
+            else if (CurrentToken.Type == TokenType.BREAK)
+                return BreakStmt();
+            else if (CurrentToken.Type == TokenType.CONTINUE)
+                return ContinueStmt();
+            else if (CurrentToken.Type == TokenType.RETURN)
+                return ReturnStmt();
+
+            var var = new Var(CurrentToken);
+            Eat(TokenType.NAME);
+            if (CurrentToken.Type == TokenType.COLON)
+                return Fun(var);
+            else
+                return AssginStmt(var);
         }
-        public AST Fun(Var var)
+        public AST Fun(Var? var)
         {
-            // fun: (NAME)? : args
+            // fun: (NAME)? COLON (expr)?
             // 上一步已经吃掉了NAME
             Eat(TokenType.COLON);
-            return new FunCall(var, Args());
+            var parms = new List<AST>();
+            while (CurrentToken.Type != TokenType.NEWLINE
+                && CurrentToken.Type != TokenType.EOF)
+            {
+                var value = Expr();
+                parms.Add(value);
+            }
+            return new FunCall(var, parms);
         }
         public AST AssginStmt(Var var)
         {
@@ -116,11 +125,36 @@ namespace GalgameNovelScript
             var right = Expr();
             return new BinOp(node, op, right);
         }
+        public AST BreakStmt()
+        {
+            // break_stmt: BREAK
+            var node = new Break();
+            Eat(TokenType.BREAK);
+            return node;
+        }
+        public AST ContinueStmt()
+        {
+            // continue_stmt: CONTINUE
+            var node = new Continue();
+            Eat(TokenType.CONTINUE);
+            return node;
+        }
+        public AST ReturnStmt()
+        {
+            // return_stmt: RETURN (expr)*
+            Eat(TokenType.RETURN);
+            AST? expr = null;
+            if (CurrentToken.Type != TokenType.NEWLINE)
+                expr = Expr();
+            return new Return(expr);
+        }
         public AST CompoundStmt()
         {
-            // compound_stmt: if_stmt | case_stmt
+            // compound_stmt: if_stmt | case_stmt | loop_stmt
             if (CurrentToken.Type == TokenType.IF)
                 return IfStmt();
+            else if (CurrentToken.Type == TokenType.LOOP)
+                return LoopStmt();
             else
                 return CaseStmt();
         }
@@ -128,14 +162,12 @@ namespace GalgameNovelScript
         {
             // if_stmt: IF expr suite (ELIF expr suite)* (ELSE suite)?
             Eat(TokenType.IF);
-            var ifStmt = new List<(AST Condition, AST ThenStmt)>();
+            var ifStmt = new List<(AST? Condition, AST ThenStmt)>();
             var expr = Expr();
             var thenSuite = Suite();
             ifStmt.Add((expr, thenSuite));
-            List<IfStmt> elifs = null;
             if (CurrentToken.Type == TokenType.ELIF)
             {
-                elifs = new List<IfStmt>();
                 while (CurrentToken.Type == TokenType.ELIF)
                 {
                     Eat(TokenType.ELIF);
@@ -146,8 +178,6 @@ namespace GalgameNovelScript
             }
             if (CurrentToken.Type == TokenType.ELSE)
             {
-                if (elifs == null)
-                    elifs = new List<IfStmt>();
                 Eat(TokenType.ELSE);
                 var elseSuite = Suite();
                 ifStmt.Add((null, elseSuite));
@@ -157,24 +187,43 @@ namespace GalgameNovelScript
         }
         public AST CaseStmt()
         {
-            // case_stmt: CASE expr? NEWLINE (WHEN expr? suite)*
+            // case_stmt: CASE value? NEWLINE INDENT (when_stmt)+ DEDENT
             Eat(TokenType.CASE);
-            AST expr = null;
+            Var? caseTip = null;
             if (CurrentToken.Type != TokenType.NEWLINE)
-                expr = Expr();
+            {
+                caseTip = new Var(CurrentToken);
+                Eat(TokenType.NAME);
+            }
             Eat(TokenType.NEWLINE);
-            var whens = new List<WhenStmt>();
+            Eat(TokenType.INDENT);
+            var whens = new List<When>();
             while (CurrentToken.Type == TokenType.WHEN)
             {
-                Eat(TokenType.WHEN);
-                AST whenExpr = null;
-                if (CurrentToken.Type != TokenType.NEWLINE)
-                    whenExpr = Expr();
-                var whenSuite = Suite();
-                whens.Add(new WhenStmt(whenExpr, whenSuite));
+                var whenStmt = WhenStmt();
+                whens.Add((When)whenStmt);
             }
-            var node = new CaseStmt(expr, whens);
+            Eat(TokenType.DEDENT);
+            var node = new Case(caseTip, whens);
             return node;
+        }
+        public AST WhenStmt()
+        {
+            // when_stmt: WHEN value suit
+            Eat(TokenType.WHEN);
+            var value = Value();
+            var suite = Suite();
+            return new When(value, suite);
+        }
+        public AST LoopStmt()
+        {
+            // loop_stmt: LOOP (expr)? suit
+            Eat(TokenType.LOOP);
+            AST? expr = null;
+            if (CurrentToken.Type != TokenType.NEWLINE)
+                expr = Expr();
+            var suite = Suite();
+            return new Loop(expr, suite);
         }
         public AST Suite()
         {
@@ -193,7 +242,7 @@ namespace GalgameNovelScript
         }
         public AST Expr()
         {
-            // expr: test
+            // expr: or_test
             return OrTest();
         }
         public AST OrTest()
@@ -327,13 +376,15 @@ namespace GalgameNovelScript
                 return new UnaryOp(op, right);
             }
             else
+            {
                 return Power();
+            }
         }
         public AST Power()
         {
             // power: atom trailer* (POW factor)*
             var node = Atom();
-            if (CurrentToken.Type == TokenType.LPAREN || CurrentToken.Type == TokenType.DOT)
+            if (CurrentToken.Type == TokenType.LBRACK || CurrentToken.Type == TokenType.DOT)
             {
                 var op = CurrentToken;
                 var trailer = Trailer();
@@ -350,7 +401,7 @@ namespace GalgameNovelScript
         }
         public AST Atom()
         {
-            // atom: LPAREN expr RPAREN | fun | NAME | INT_CONST | REAL_CONST | STR | TRUE | FALSE | NONE 
+            // atom: LPAREN expr RPAREN | fun | value
             if (CurrentToken.Type == TokenType.LPAREN)
             {
                 Eat(TokenType.LPAREN);
@@ -364,6 +415,20 @@ namespace GalgameNovelScript
                 Eat(TokenType.NAME);
                 if (CurrentToken.Type == TokenType.COLON)
                     return Fun(node);
+                return node;
+            }
+            else
+            {
+                return Value();
+            }
+        }
+        public AST? Value()
+        {
+            // value: NAME | INT_CONST | REAL_CONST | STR | TRUE | FALSE | NONE
+            if (CurrentToken.Type == TokenType.NAME)
+            {
+                var node = new Var(CurrentToken);
+                Eat(TokenType.NAME);
                 return node;
             }
             else if (CurrentToken.Type == TokenType.INT_CONST)
@@ -398,19 +463,27 @@ namespace GalgameNovelScript
             }
             else if (CurrentToken.Type == TokenType.NONE)
             {
-                var node = new None(CurrentToken);
+                var node = new None();
                 Eat(TokenType.NONE);
                 return node;
             }
             else
             {
-                Error(ErrorCode.UNEXPECTED_TOKEN, CurrentToken);
+                Error(ErrorCode.UNEXPECTED_TOKEN, new TokenType[] {
+                    TokenType.NAME,
+                    TokenType.INT_CONST,
+                    TokenType.REAL_CONST,
+                    TokenType.STR,
+                    TokenType.TRUE,
+                    TokenType.FALSE,
+                    TokenType.NONE
+                });
                 return null;
             }
         }
-        public AST Trailer()
+        public AST? Trailer()
         {
-            // trailer: [ args ] | . NAME
+            // trailer: LBRACK args RBRACK | DOT NAME
             if (CurrentToken.Type == TokenType.LBRACK)
             {
                 Eat(TokenType.LBRACK);
@@ -427,7 +500,8 @@ namespace GalgameNovelScript
             }
             else
             {
-                Error(ErrorCode.UNEXPECTED_TOKEN, CurrentToken);
+                Error(ErrorCode.UNEXPECTED_TOKEN, new TokenType[] {
+                    TokenType.LBRACK, TokenType.DOT });
                 return null;
             }
         }
@@ -448,7 +522,7 @@ namespace GalgameNovelScript
         {
             var node = Program();
             if (CurrentToken.Type != TokenType.EOF)
-                Error(ErrorCode.UNEXPECTED_TOKEN, CurrentToken);
+                Error(ErrorCode.UNEXPECTED_TOKEN, new TokenType[] { TokenType.EOF });
             return node;
         }
     }

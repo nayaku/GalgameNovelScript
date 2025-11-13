@@ -35,48 +35,78 @@ namespace GalgameNovelScript
         {
             return node.Value;
         }
-        public object VisitNone(None node)
+        public object? VisitNone(None node)
         {
-            return node.Value;
+            return null;
         }
         public object VisitBinOp(BinOp node)
         {
             if (node.Op.Type == TokenType.PLUS)
+            {
                 return (dynamic)Visit(node.Left) + (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.MINUS)
+            {
                 return (dynamic)Visit(node.Left) - (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.MUL)
+            {
                 return (dynamic)Visit(node.Left) * (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.DIV)
+            {
                 return (float)(dynamic)Visit(node.Left) / (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.FLOORDIV)
+            {
                 return (int)((dynamic)Visit(node.Left) / (dynamic)Visit(node.Right));
+            }
             else if (node.Op.Type == TokenType.MOD)
+            {
                 return (dynamic)Visit(node.Left) % (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.POW)
+            {
                 return Math.Pow(Convert.ToSingle(Visit(node.Left)), Convert.ToSingle(Visit(node.Right)));
+            }
             else if (node.Op.Type == TokenType.EQ)
+            {
                 return Visit(node.Left).Equals(Visit(node.Right));
+            }
             else if (node.Op.Type == TokenType.NE)
+            {
                 return !Visit(node.Left).Equals(Visit(node.Right));
+            }
             else if (node.Op.Type == TokenType.LT)
+            {
                 return (dynamic)Visit(node.Left) < (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.LE)
+            {
                 return (dynamic)Visit(node.Left) <= (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.GT)
+            {
                 return (dynamic)Visit(node.Left) > (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.GE)
+            {
                 return (dynamic)Visit(node.Left) >= (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.AND)
+            {
                 return (dynamic)Visit(node.Left) && (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.OR)
+            {
                 return (dynamic)Visit(node.Left) || (dynamic)Visit(node.Right);
+            }
             else if (node.Op.Type == TokenType.DOT)
             {
                 var left = Visit(node.Left);
                 var leftType = left.GetType();
                 var right = (Var)node.Right;
-                object value = null;
+                object? value = null;
                 if (left is IDictionary<string, object>)
                     value = ((IDictionary<string, object>)left).TryGetValue(right.Value, out value);
                 if (value != null)
@@ -93,7 +123,7 @@ namespace GalgameNovelScript
             {
                 var left = Visit(node.Left);
                 var right = (Var)node.Right;
-                object value = null;
+                object? value = null;
                 if (left is IDictionary<string, object>)
                     value = ((IDictionary<string, object>)left).TryGetValue(right.Value, out value);
                 if (left is IList<object>)
@@ -131,10 +161,14 @@ namespace GalgameNovelScript
                     return value;
                 }
                 else
+                {
                     throw new Exception("未知的赋值操作符");
+                }
             }
             else
+            {
                 throw new Exception("未知的二元操作符");
+            }
         }
         public object VisitUnaryOp(UnaryOp node)
         {
@@ -152,7 +186,7 @@ namespace GalgameNovelScript
             var value = CurrenScope.GetMember(node.Value) ?? node.Value;
             return value;
         }
-        public object VisitProgram(Program node)
+        public object? VisitProgram(Program node)
         {
             foreach (var statement in node.Stmts)
             {
@@ -162,28 +196,31 @@ namespace GalgameNovelScript
         }
         public object VisitFunCall(FunCall node)
         {
-            var fun = CurrenScope.GetMember(node.VarNode.Value) ??
+            var fun = CurrenScope.GetMember(node.VarNode.Value) ?? // TODO 空函数
                 throw new Exception("未定义的标识符");
             if (fun is Delegate func)
             {
                 var args = new List<object>();
-                foreach (var arg in node.ActualParams.ArgsList)
+                foreach (var arg in node.Parms)
                 {
                     args.Add(Visit(arg));
                 }
                 return func.DynamicInvoke(args.ToArray());
             }
             else
+            {
                 throw new Exception("未定义的标识符");
-
+            }
         }
-        public object VisitIfStmt(IfStmt node)
+        public object? VisitIfStmt(IfStmt node)
         {
             foreach ((var condition, var thenStmt) in node.Stmts)
             {
                 var toVisit = false;
                 if (condition is null)
+                {
                     toVisit = true;
+                }
                 else
                 {
                     var result = Visit(condition);
@@ -201,11 +238,11 @@ namespace GalgameNovelScript
             }
             return null;
         }
-        public object VisitCaseStmt(CaseStmt node)
+        public object VisitCaseStmt(Case node)
         {
             throw new Exception("未实现");
         }
-        public object VisitSuite(Suite node)
+        public object? VisitSuite(Suite node)
         {
             foreach (var statement in node.Stmts)
             {
@@ -213,7 +250,7 @@ namespace GalgameNovelScript
             }
             return null;
         }
-        public object Interpret()
+        public object? Interpret()
         {
             if (Tree == null)
                 return null;

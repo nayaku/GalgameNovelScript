@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "GalgameNovelScriptTest": {
+      "commandName": "Project",
+      "commandLineArgs": "$(SolutionDir)\\测试.ns"
+    }
+  }
+}
