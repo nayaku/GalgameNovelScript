@@ -69,9 +69,10 @@ namespace GalgameNovelScript
         }
         public AST SimpleStmt()
         {
-            // simple_stmt: small_stmt NEWLINE
+            // simple_stmt: small_stmt (NEWLINE | EOF)
             var node = SmallStmt();
-            Eat(TokenType.NEWLINE);
+            if (CurrentToken.Type == TokenType.NEWLINE)
+                Eat(TokenType.NEWLINE);
             return node;
         }
         public AST SmallStmt()

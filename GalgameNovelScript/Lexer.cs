@@ -188,7 +188,7 @@ namespace GalgameNovelScript
         {
             var result = new List<char>();
             // 第一次遍历时，CurrentChar是字母，外部已经判断过了
-            while (!char.IsWhiteSpace(CurrentChar) && Token.ChineseSymbol.IndexOf(CurrentChar) == -1)
+            while (CurrentChar != '\n' && CurrentChar != '\0' && !char.IsWhiteSpace(CurrentChar) && Token.ChineseSymbol.IndexOf(CurrentChar) == -1)
             {
                 // 支持转义字符
                 if (CurrentChar == '\\')

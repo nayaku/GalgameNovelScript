@@ -46,7 +46,7 @@
 
 program: (NEWLINE | stmt)*
 stmt: simple_stmt | compound_stmt
-simple_stmt: small_stmt NEWLINE
+simple_stmt: small_stmt (NEWLINE | EOF)
 small_stmt: (fun | assign_stmt | break_stmt | continue_stmt | return_stmt)?
 fun: (NAME)? COLON (expr)*
 assign_stmt: NAME trailer* = expr
